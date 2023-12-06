@@ -3,6 +3,8 @@ from functools import partial
 
 from hydrogram.enums import ChatMemberStatus
 
+from cdb import cursosdevs
+
 from pyrogram.types import (
     CallbackQuery,
     ChatPrivileges,
@@ -99,3 +101,15 @@ def require_admin(
         return wrapper
 
     return decorator
+
+async def get_target_user(c: cursosdevs, m: Message) -> User:
+    if m.reply_to_message:
+        return m.reply_to_message.from_user
+    msg_entities = m.entities[1] if m.text.startswith("/") else m.entities[0]
+    return await c.get_users(
+        msg_entities.user.id
+        if msg_entities.type == MessageEntityType.TEXT_MENTION
+        else int(m.command[1])
+        if m.command[1].isdecimal()
+        else m.command[1]
+    )
