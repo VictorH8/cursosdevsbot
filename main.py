@@ -31,6 +31,8 @@ ADMIN_STATUSES: Iterable[ChatMemberStatus] = (
     ChatMemberStatus.ADMINISTRATOR,
 )
 
+PREFIXES = os.environ.get("TRIGGER", "/ ! .".split())
+
 async def get_reason_text(c: Client, m: Message) -> Message:
     reply = m.reply_to_message
     spilt_text = m.text.split
@@ -143,13 +145,13 @@ async def get_target_user(c: cursosdevs, m: Message) -> User:
         else m.command[1]
     )
 
-@cursosdevs.on_message(filters.command('start',prefixes=['/','.','!']))
+@cursosdevs.on_message(filters.command('start', PREFIXES))
 async def startando(client,message):
     await message.reply_text(f"<strong>online</strong>")
 
 
 
-@cursosdevs.on_message(filters.command('id',prefixes=['/','.','!']))
+@cursosdevs.on_message(filters.command('id', PREFIXES))
 async def idinfo(client,message):
     if enums.chat_type == "PRIVATE":
         await message.reply(f"ID: <strong>{message.user_id}</strong>\n")
@@ -163,7 +165,6 @@ async def welcome(client,message):
     await message.reply(f'Seja Bem Vindo Ao Nosso Grupo De Cursos Para Devs. @{message.from_user.username}')
 
 @cursosdevs.on_message(filters.command("ban", PREFIXES))
-@use_chat_lang
 @require_admin(ChatPrivileges(can_restrict_members=True))
 async def ban(c: Client, m: Message):
     target_user = await get_target_user(c, m)
