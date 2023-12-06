@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 import os
 
 from hydrogram import Client, filters
-from hydrogram.enums import ChatMemberStatus
+from hydrogram.enums import ChatMemberStatus, ChatType
 from hydrogram.types import (
     CallbackQuery,
     ChatPrivileges,
@@ -11,7 +11,7 @@ from hydrogram.types import (
 )
 
 
-from typing import Union, Optional, Callable
+from typing import Union, Optional, Callable, Iterable
 from functools import partial, wraps
 
 
@@ -23,6 +23,24 @@ cursosdevs = Client(
              bot_token=os.environ['BOT_TOKEN'],
              name='cursosdevs_bot',
              in_memory=True)
+
+GROUP_TYPES: Iterable[ChatType] = (ChatType.GROUP, ChatType.SUPERGROUP)
+
+ADMIN_STATUSES: Iterable[ChatMemberStatus] = (
+    ChatMemberStatus.OWNER,
+    ChatMemberStatus.ADMINISTRATOR,
+)
+
+async def get_reason_text(c: Client, m: Message) -> Message:
+    reply = m.reply_to_message
+    spilt_text = m.text.split
+
+    if not reply and len(spilt_text()) >= 3:
+        return spilt_text(None, 2)[2]
+    if reply and len(spilt_text()) >= 2:
+        return spilt_text(None, 1)[1]
+
+    return None
 
 async def check_perms(
     message: Union[CallbackQuery, Message],
@@ -144,16 +162,26 @@ async def welcome(client,message):
     await cursosdevs.delete_messages(message.chat.id, message.id)
     await message.reply(f'Seja Bem Vindo Ao Nosso Grupo De Cursos Para Devs. @{message.from_user.username}')
 
+@cursosdevs.on_message(filters.command("ban", PREFIXES))
+@use_chat_lang
+@require_admin(ChatPrivileges(can_restrict_members=True))
+async def ban(c: Client, m: Message):
+    target_user = await get_target_user(c, m)
+    reason = await get_reason_text(c, m)
+    check_admin = await m.chat.get_member(target_user.id)
+    if check_admin.status in ADMIN_STATUSES:
+        await m.reply_text("<i>Eu não vou banir um administrador!! Pois isso é uma ideia bem idiota..</i>")
+        return
 
-
-
-
-
-@cursosdevs.on_message(filters.command('ban',prefixes=['/','.','!']))
-async def banir(client,message):
-    users = await cursosdevs.get_users(message.from_user.id)
-    await cursosdevs.ban_chat_member(chat_id=message.chat.id,user_id=users.id)  
-
+    await m.chat.ban_member(target_user.id)
+    text = ("Usuário {user} pelo administrador {admin}.format(
+        user=target_user.mention,
+        admin=m.from_user.mention,
+    )
+    if reason:
+        await m.reply_text(text + "\n" + "<b>Razão:</b>".format(reason_text=reason))
+    else:
+        await m.reply_text(text)
 
 
 cursosdevs.run()
