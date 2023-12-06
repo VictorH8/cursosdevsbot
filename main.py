@@ -175,7 +175,7 @@ async def ban(c: Client, m: Message):
         return
 
     await m.chat.ban_member(target_user.id)
-    text = ("Usuário {user} pelo administrador {admin}.format(
+    text = ("Usuário {user} banido pelo administrador {admin}").format(
         user=target_user.mention,
         admin=m.from_user.mention,
     )
