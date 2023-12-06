@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, Optional
 from functools import partial
 
 from hydrogram.enums import ChatMemberStatus
